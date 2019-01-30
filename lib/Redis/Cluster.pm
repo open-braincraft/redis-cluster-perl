@@ -255,6 +255,10 @@ my %SPEC = (
       regex     => qr/^\d+$/,
       optional  => 1,
     },
+    detect_cluster => {
+      type    => BOOLEAN,
+      default => 0,
+    },
     debug          => {
       type    => BOOLEAN,
       default => $ENV{REDIS_CLUSTER_DEBUG} || 0,
@@ -281,12 +285,22 @@ sub new {
     $self->{server} = [ split(m/[\s,;]+/, $self->{server}) ];
   }
 
+  $self = bless($self, $class);
+
+  # Detect cluster settings using CLUSTER SLOTS
+  if ($self->{detect_cluster}) {
+      my $nodes = $self->cluster_slots();
+      @{$self->{server}} = map {$_->[2]} @$nodes;
+      %NODES = ();
+      return $self;
+  }
+
   # Check minimum number of nodes
   if (@{$self->{server}} < MIN_NODES) {
     croak('At least ' . MIN_NODES . ' nodes should be specified');
   }
 
-  return bless($self, $class);
+  return $self;
 }
 
 ####
