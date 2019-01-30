@@ -589,7 +589,7 @@ sub _get_master_by_slot {
   my ($slot) = @_;
 
   my $range = $self->_get_range_by_slot($slot);
-  return $self->_get_node(join(':', @{$range->[2]}));
+  return $self->_get_node(join(':', @{$range->[2]}[0,1]));
 }
 
 ####
@@ -611,7 +611,7 @@ sub _get_node_by_slot {
   my $node_cnt = @$range - 2 - $offset;
   $num = 1 + int(rand($node_cnt)) if $num < 1 || $num > $node_cnt;
 
-  return $self->_get_node(join(':', @{$range->[ 1 + $offset + $num ]}));
+  return $self->_get_node(join(':', @{$range->[ 1 + $offset + $num ]}[0,1]));
 }
 
 ####
@@ -662,7 +662,7 @@ sub _get_node {
   my $self = shift(@_);
   my ($node) = @_;
 
-  $node = join(':', @$node) if ref($node);
+  $node = join(':', @$node[0,1]) if ref($node);
 
   unless (exists($NODES{$node})) {
     $NODES{$node} = Redis->new(%$self, server => $node);
@@ -676,7 +676,7 @@ sub _is_member {
   my $self = shift(@_);
   my ($node) = @_;
 
-  $node = join(':', @$node) if ref($node);
+  $node = join(':', @$node[0,1]) if ref($node);
 
   foreach my $range (@{$self->_get_slots()}) {
     return 1 if any { $node eq join(':', @$_) } @$range[ 2 .. $#$range ];
